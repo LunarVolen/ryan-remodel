@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ryan's Remodel — Open Items</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@600;700&family=Source+Serif+4:ital,wght@0,300;0,400;1,300&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #1a1612;
+    --surface: #221e19;
+    --card: #2a2520;
+    --card-hover: #2f2a24;
+    --border: #3d3730;
+    --accent: #c9a05a;
+    --accent2: #7a9e7e;
+    --accent3: #8a7ab0;
+    --accent4: #b07a7a;
+    --accent5: #7aaab0;
+    --accent6: #b09a6a;
+    --done: #4a5a4a;
+    --text: #e8e0d4;
+    --muted: #8a8078;
+    --dim: #5a5248;
+    --check-bg: #3a3028;
+    --detail-bg: #1f1c17;
+    --detail-border: #332e28;
+    --input-bg: #252118;
+    --input-border: #4a4238;
+    --input-focus: #c9a05a;
+    --setup-bg: #1a1f14;
+    --setup-border: #4a6a3a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Source Serif 4', Georgia, serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0 0 80px;
+  }
+
+  /* ── SETUP BANNER ── */
+  #setup-banner {
+    background: var(--setup-bg);
+    border-bottom: 2px solid var(--setup-border);
+    padding: 20px 32px;
+    display: none;
+  }
+  #setup-banner.visible { display: block; }
+
+  .setup-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    color: var(--accent2);
+    margin-bottom: 10px;
+  }
+
+  .setup-body {
+    font-size: 0.95rem;
+    color: var(--text);
+    line-height: 1.6;
+    margin-bottom: 14px;
+  }
+
+  .setup-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .setup-input {
+    background: var(--input-bg);
+    border: 1px solid var(--setup-border);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    padding: 8px 12px;
+    width: 340px;
+    outline: none;
+  }
+  .setup-input:focus { border-color: var(--accent2); }
+
+  .setup-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 8px 18px;
+    border-radius: 3px;
+    border: 1px solid var(--accent2);
+    background: #1a2a1a;
+    color: var(--accent2);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .setup-btn:hover { background: #253a25; }
+
+  .setup-status {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  /* ── SYNC STATUS BAR ── */
+  #sync-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 32px;
+    background: #161310;
+    border-bottom: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--dim);
+    letter-spacing: 0.05em;
+  }
+
+  #sync-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--dim);
+    flex-shrink: 0;
+    transition: background 0.3s;
+  }
+  #sync-dot.syncing  { background: var(--accent); }
+  #sync-dot.synced   { background: var(--accent2); }
+  #sync-dot.error    { background: var(--accent4); }
+
+  header {
+    padding: 28px 32px 20px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.95rem;
+    letter-spacing: -0.01em;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .progress-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.91rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    flex-shrink: 0;
+  }
+
+  .progress-bar-wrap {
+    flex: 1;
+    min-width: 80px;
+    max-width: 220px;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    align-self: center;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 2px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  .content {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 32px 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .category {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .cat-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 18px 11px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .cat-header:hover { background: var(--card-hover); }
+
+  .cat-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+  .cat-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.14rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    flex: 1;
+  }
+
+  .cat-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.86rem;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+  }
+
+  .cat-toggle { font-size: 0.85rem; color: var(--dim); transition: transform 0.2s; flex-shrink: 0; }
+  .cat-toggle.open { transform: rotate(180deg); }
+
+  .items-list { list-style: none; display: none; }
+  .items-list.visible { display: block; }
+
+  .item-wrap { border-bottom: 1px solid var(--border); }
+  .item-wrap:last-child { border-bottom: none; }
+
+  .item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 20px;
+    cursor: pointer;
+    transition: background 0.12s;
+    user-select: none;
+  }
+  .item:hover { background: var(--card-hover); }
+  .item.done .item-label { text-decoration: line-through; color: var(--dim); }
+  .item.done .item-note-text { color: var(--dim); opacity: 0.6; }
+
+  .check-box {
+    width: 22px; height: 22px;
+    border: 1.5px solid var(--border);
+    border-radius: 3px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    background: var(--check-bg);
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .item.done .check-box { background: var(--done); border-color: var(--done); }
+  .check-mark { display: none; color: #aacfaa; font-size: 0.82rem; line-height: 1; }
+  .item.done .check-mark { display: block; }
+
+  .item-body { flex: 1; min-width: 0; }
+
+  .item-label {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 1.17rem;
+    font-weight: 500;
+    line-height: 1.45;
+    color: var(--text);
+  }
+
+  .item-note-text {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 0.99rem;
+    font-style: italic;
+    color: var(--muted);
+    margin-top: 3px;
+    display: block;
+    line-height: 1.45;
+  }
+
+  .item-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 5px;
+  }
+
+  .badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.77rem;
+    letter-spacing: 0.04em;
+    padding: 3px 8px;
+    border-radius: 2px;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--muted);
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .badge.b-model  { border-color: #5a4a28; color: var(--accent); }
+  .badge.b-finish { border-color: #2a4a3a; color: var(--accent2); }
+  .badge.b-photo  { border-color: #2a2a5a; color: #9a9ae0; cursor: pointer; }
+  .badge.b-photo:hover { background: #2a2a4a; }
+
+  .expand-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.77rem;
+    color: var(--dim);
+    flex-shrink: 0;
+    margin-top: 3px;
+    padding: 3px 7px;
+    border-radius: 2px;
+    border: 1px solid transparent;
+    background: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .expand-btn:hover { border-color: var(--dim); color: var(--muted); }
+  .expand-btn.active { color: var(--accent); border-color: var(--accent6); }
+
+  .detail-panel {
+    background: var(--detail-bg);
+    border-top: 1px solid var(--detail-border);
+    padding: 16px 18px 18px 48px;
+    display: none;
+  }
+  .detail-panel.open { display: block; }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 20px;
+  }
+  @media (max-width: 560px) { .detail-grid { grid-column: 1fr; } }
+
+  .detail-field { display: flex; flex-direction: column; gap: 5px; }
+  .detail-field.full { grid-column: 1 / -1; }
+
+  .field-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.77rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .field-input {
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.95rem;
+    padding: 7px 11px;
+    width: 100%;
+    transition: border-color 0.15s;
+    outline: none;
+  }
+  .field-input:focus { border-color: var(--input-focus); }
+  .field-input::placeholder { color: var(--dim); }
+
+  textarea.field-input {
+    font-family: 'Source Serif 4', serif;
+    font-size: 1rem;
+    resize: vertical;
+    min-height: 64px;
+  }
+
+  .photo-preview { margin-top: 8px; display: none; }
+  .photo-preview img {
+    max-width: 100%;
+    max-height: 160px;
+    border-radius: 3px;
+    border: 1px solid var(--input-border);
+    object-fit: cover;
+  }
+  .photo-preview.visible { display: block; }
+
+  .detail-save-row {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .save-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 7px 16px;
+    border-radius: 3px;
+    border: 1px solid var(--accent6);
+    background: #2a2318;
+    color: var(--accent);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .save-btn:hover { background: #3a3020; }
+
+  .save-status {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--accent2);
+    opacity: 0;
+    transition: opacity 0.3s;
+    letter-spacing: 0.06em;
+  }
+  .save-status.show { opacity: 1; }
+
+  .filter-bar {
+    display: flex;
+    gap: 8px;
+    padding: 0 20px;
+    max-width: 880px;
+    margin: 22px auto 0;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.81rem;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .filter-btn:hover, .filter-btn.active {
+    background: var(--check-bg);
+    color: var(--text);
+    border-color: var(--dim);
+  }
+</style>
+</head>
+<body>
+
+<!-- FIRST-RUN SETUP BANNER -->
+<div id="setup-banner">
+  <div class="setup-title">⚙️ First-time setup — enter your JSONBin API key</div>
+  <div class="setup-body">
+    Paste your JSONBin API key below. This will be saved in your browser and used to sync the checklist across all devices. You only need to do this once per browser/device.
+  </div>
+  <div class="setup-row">
+    <input class="setup-input" id="api-key-input" type="password" placeholder="Paste your JSONBin API key here" autocomplete="off">
+    <button class="setup-btn" onclick="initWithKey()">Connect &amp; Load</button>
+    <span class="setup-status" id="setup-status"></span>
+  </div>
+</div>
+
+<!-- SYNC STATUS -->
+<div id="sync-bar">
+  <div id="sync-dot"></div>
+  <span id="sync-text">Connecting...</span>
+</div>
+
+<header>
+  <h1>Ryan's Remodel — Open Items</h1>
+  <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="progress-text" id="progressText">0 / 0 complete</div>
+</header>
+
+<div class="filter-bar">
+  <button class="filter-btn active" onclick="setFilter('all')">All</button>
+  <button class="filter-btn" onclick="setFilter('open')">Open Only</button>
+  <button class="filter-btn" onclick="setFilter('done')">Done Only</button>
+</div>
+
+<div class="content" id="content"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  CONFIGURATION
+//  Paste your JSONBin API key and Bin ID below.
+//  The Bin ID will be filled in automatically on first run.
+// ═══════════════════════════════════════════════════════
+const CONFIG = {
+  API_KEY: '$2a$10$.RWQbVGvasDTq3ZIr5T9v.bqWdK2AFKOgdnfnewjaJ5nk44v43ezS',   // ← replace this with your key
+  BIN_ID:  'PASTE_YOUR_BIN_ID_HERE',    // ← will be filled in after first run
+};
+// ═══════════════════════════════════════════════════════
+
+const JSONBIN_BASE = 'https://api.jsonbin.io/v3';
+
+const CATEGORIES = [
+  {
+    id: 'franklin',
+    title: 'Franklin Building Supply',
+    color: '#c9a05a',
+    items: [
+      { id: 'f1', text: 'Front door selection with side window', note: 'Confirm style, size, finish' },
+      { id: 'f2', text: 'Wood paneling sheets — master bedroom accent walls', note: 'Confirm species, sheet size, quantity needed' },
+      { id: 'f3', text: 'Hidden door frame — accent wall to flex room', note: 'Must align with Roadrunner mirror dimensions + handle clearance' },
+      { id: 'f4', text: 'Barn door frame — master bedroom closet', note: 'Panels to be upholstered in vinyl with decorative nails (leather tile look)' },
+      { id: 'f5', text: 'Door hardware — front door and garage-to-laundry door', note: 'Confirm Franklin is correct source for both' },
+    ]
+  },
+  {
+    id: 'wallpaper',
+    title: 'Wallpaper',
+    color: '#c07ab0',
+    items: [
+      { id: 'w1', text: 'Master bedroom — single accent wall behind bed', note: 'Wallpaper Warehouse; sample selected — locate item #, measure wall, calculate rolls + cost' },
+      { id: 'w2', text: 'Powder room — full room wallpaper', note: 'Wallpaper Warehouse; locate item #, measure all four walls, calculate rolls + cost' },
+      { id: 'w3', text: 'Laundry room backsplash — potential wallpaper', note: "Ryan considering same wallpaper as parents' house — check for leftover rolls before ordering new" },
+    ]
+  },
+  {
+    id: 'alloway',
+    title: 'Alloway Electric — Light Fixtures',
+    color: '#7aaab0',
+    items: [
+      { id: 'a1', text: 'Dining room pendant light', note: 'Unchanged from original list — confirm selection still stands' },
+      { id: 'a2', text: 'Master bedroom ceiling fan', note: 'Same fan as originally selected; no light kit' },
+      { id: 'a3', text: 'Master bathroom — 2 sconces above mirror', note: 'Modern/contemporary; simple LED bar in brushed nickel, similar style to dining room pendant' },
+      { id: 'a4', text: 'Powder room — ornate pendant + possible sconce', note: 'Stylish/contemporary; sconce TBD' },
+      { id: 'a5', text: 'Entryway exterior light by front door', note: 'Modern/contemporary' },
+      { id: 'a6', text: 'Entryway interior chandelier', note: 'Very low priority — decide if worth pursuing' },
+      { id: 'a7', text: 'Sconces flanking hidden door mirror — 2 fixtures', note: '1960s swanky bar style' },
+      { id: 'a8', text: 'Two floor/stick-post lamps flanking TV — living room', note: 'Contemporary style' },
+    ]
+  },
+  {
+    id: 'roadrunner',
+    title: 'Roadrunner Glass — Mirrors',
+    color: '#8a7ab0',
+    items: [
+      { id: 'rr1', text: 'Mirror for hidden Murphy-style flex room door', note: 'Thick black frame required — clearance for finger-grab handle; no visible fingerprint access point' },
+      { id: 'rr2', text: 'Two large LED-lit mirrors — master bathroom', note: 'Confirm Roadrunner as source or identify alternate vendor' },
+      { id: 'rr3', text: 'Rounded-top black-framed mirror — powder room', note: 'Approx. 21" wide — confirm exact dimension before ordering' },
+    ]
+  },
+  {
+    id: 'barfootrail',
+    title: 'Bar Foot Rail — Kitchen Island',
+    color: '#a07850',
+    items: [
+      { id: 'bfr1', text: 'Brushed bronze bar foot rail — two sides of kitchen island', note: 'Measure both island sides for linear footage; confirm mounting hardware included or source separately' },
+    ]
+  },
+  {
+    id: 'rugs',
+    title: 'Rugs',
+    color: '#7a9e7e',
+    items: [
+      { id: 'r1', text: 'Living room — large area rug', note: 'High stain-resistance priority; anchors main seating/TV area' },
+      { id: 'r2', text: 'Kitchen — rug runners (2+)', note: 'Between island and outer counters' },
+      { id: 'r3', text: 'Bar area rug', note: 'In front of bar' },
+      { id: 'r4', text: 'Entryway interior rug', note: '' },
+      { id: 'r5', text: 'Master bathroom rug', note: '' },
+      { id: 'r6', text: 'Powder room rug', note: '' },
+      { id: 'r7', text: 'Dining room rug', note: 'Under or around dining table' },
+      { id: 'r8', text: 'Outdoor patio — 2 large rugs', note: 'Weather-resistant' },
+      { id: 'r9', text: 'Outdoor front entry rug', note: 'Weather-resistant' },
+    ]
+  },
+  {
+    id: 'feltright',
+    title: 'Felt-Right — Acoustic Panels',
+    color: '#6a9e7e',
+    items: [
+      { id: 'fr1', text: 'Acoustic panels for behind-TV wall', note: "Felt-Right, Timber color — 16 panels at 2'×2' (verify count before ordering)" },
+    ]
+  },
+  {
+    id: 'furniture',
+    title: 'Furniture & Seating',
+    color: '#b07a7a',
+    items: [
+      { id: 'fu1', text: 'Dining room table', note: 'Contemporary/masculine direction; style TBD' },
+      { id: 'fu2', text: 'Dining room bench', note: 'Coordinate with table selection' },
+      { id: 'fu3', text: 'Dining room swivel chairs', note: 'Quantity TBD based on table size' },
+      { id: 'fu4', text: 'Bar swivel stools — 7 total', note: 'Coordinate with bar aesthetic' },
+    ]
+  },
+  {
+    id: 'artwork',
+    title: 'Artwork & Wall Décor',
+    color: '#a08ab0',
+    items: [
+      { id: 'art1', text: 'King Rooster AI portrait — powder room', note: "Behind black toilet; AI-generated portrait of Ryan's Airedale" },
+      { id: 'art2', text: 'Powder room — additional contemporary/masculine artwork', note: 'Fill remaining wall space after mirror + Rooster portrait placed' },
+      { id: 'art3', text: 'Bar wall — mirror, large artwork, or chalkboard', note: 'Wall between sliding glass door and bar' },
+      { id: 'art4', text: 'Throughout — masculine contemporary artwork', note: 'Various locations; select as rooms come together' },
+    ]
+  },
+  {
+    id: 'misc',
+    title: 'Misc / Painting / To Resolve',
+    color: '#8a8078',
+    items: [
+      { id: 'm1', text: 'Paint door between garage and laundry room', note: 'Determine who handles — contractor, painter, or DIY' },
+      { id: 'm2', text: 'Additional furnishings as needed', note: 'Placeholder — revisit once primary furniture is selected' },
+    ]
+  },
+  {
+    id: 'grandma102',
+    title: "🎂 Grandma's 102nd Birthday — June 14th  ·  Would Be Nice",
+    color: '#c06878',
+    items: [
+      { id: 'g1', text: 'Large pots & planters with flowers — outdoor', note: 'Festive seasonal color; coordinate with patio aesthetic' },
+      { id: 'g2', text: 'Outdoor seating — couch, chairs, and coffee table', note: 'Comfortable lounge setup for the party; weather-appropriate' },
+      { id: 'g3', text: 'Cantilevered outdoor umbrella(s) — 1 or 2', note: 'Shade for patio seating area' },
+      { id: 'g4', text: 'Interior couch with pillows', note: 'Would be nice to have in place by party date' },
+      { id: 'g5', text: 'Interior coffee table', note: 'Coordinate with couch selection' },
+      { id: 'g6', text: 'Indoor vertical house plant(s) — 1 or 2', note: 'Statement plants; tall/architectural style preferred' },
+    ]
+  }
+];
+
+// ── STATE ──
+let filter = 'all';
+let checkState  = {};
+let detailState = {};
+let apiKey = '';
+let binId  = '';
+let saveTimer = null;
+
+// ── INIT ──
+function init() {
+  // Check if key/bin are hardcoded in CONFIG (for GitHub Pages deployment)
+  if (CONFIG.API_KEY !== 'PASTE_YOUR_API_KEY_HERE') {
+    apiKey = CONFIG.API_KEY;
+    binId  = CONFIG.BIN_ID !== 'PASTE_YOUR_BIN_ID_HERE' ? CONFIG.BIN_ID : '';
+    startApp();
+    return;
+  }
+  // Fall back to localStorage for key/binId
+  apiKey = localStorage.getItem('jb_api_key') || '';
+  binId  = localStorage.getItem('jb_bin_id')  || '';
+  if (apiKey && binId) {
+    startApp();
+  } else {
+    showSetup();
+  }
+}
+
+function showSetup() {
+  document.getElementById('setup-banner').classList.add('visible');
+  setSyncStatus('idle', 'Not connected — enter API key above');
+}
+
+async function initWithKey() {
+  const inputKey = document.getElementById('api-key-input').value.trim();
+  if (!inputKey) { setSetupStatus('Please paste your API key first.'); return; }
+  apiKey = inputKey;
+  setSetupStatus('Creating data bin...');
+  const newBinId = await createBin();
+  if (!newBinId) { setSetupStatus('❌ Could not connect. Check your API key and try again.'); return; }
+  binId = newBinId;
+  localStorage.setItem('jb_api_key', apiKey);
+  localStorage.setItem('jb_bin_id',  binId);
+  document.getElementById('setup-banner').classList.remove('visible');
+  setSetupStatus('');
+  startApp();
+}
+
+function setSetupStatus(msg) {
+  document.getElementById('setup-status').textContent = msg;
+}
+
+async function startApp() {
+  setSyncStatus('syncing', 'Loading...');
+  await loadFromBin();
+  renderAll();
+}
+
+// ── JSONBIN API ──
+function headers() {
+  return {
+    'Content-Type': 'application/json',
+    'X-Master-Key': apiKey,
+    'X-Bin-Versioning': 'false',
+  };
+}
+
+async function createBin() {
+  try {
+    const res = await fetch(`${JSONBIN_BASE}/b`, {
+      method: 'POST',
+      headers: { ...headers(), 'X-Bin-Name': 'ryan-remodel' },
+      body: JSON.stringify({ checkState: {}, detailState: {} }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.metadata?.id || null;
+  } catch(e) { return null; }
+}
+
+async function loadFromBin() {
+  if (!binId) { setSyncStatus('idle', 'No bin ID — setup needed'); return; }
+  try {
+    const res = await fetch(`${JSONBIN_BASE}/b/${binId}/latest`, { headers: headers() });
+    if (!res.ok) throw new Error('Load failed');
+    const data = await res.json();
+    checkState  = data.record?.checkState  || {};
+    detailState = data.record?.detailState || {};
+    setSyncStatus('synced', `Loaded · ${timestamp()}`);
+  } catch(e) {
+    setSyncStatus('error', 'Could not load data — check connection');
+  }
+}
+
+async function saveToBin() {
+  if (!binId) return;
+  setSyncStatus('syncing', 'Saving...');
+  try {
+    const res = await fetch(`${JSONBIN_BASE}/b/${binId}`, {
+      method: 'PUT',
+      headers: headers(),
+      body: JSON.stringify({ checkState, detailState }),
+    });
+    if (!res.ok) throw new Error('Save failed');
+    setSyncStatus('synced', `Saved · ${timestamp()}`);
+  } catch(e) {
+    setSyncStatus('error', 'Save failed — check connection');
+  }
+}
+
+// Debounce saves so rapid clicks don't hammer the API
+function scheduleSave() {
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => saveToBin(), 800);
+}
+
+function setSyncStatus(state, msg) {
+  const dot  = document.getElementById('sync-dot');
+  const text = document.getElementById('sync-text');
+  dot.className  = state;
+  text.textContent = msg;
+}
+
+function timestamp() {
+  return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+// ── DETAIL ──
+function getDetail(id) { return detailState[id] || { model:'', finish:'', photoUrl:'', notes:'' }; }
+
+// ── FILTER ──
+function setFilter(f) {
+  filter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    const t = b.textContent.toLowerCase();
+    b.classList.toggle('active', (f==='all'&&t.includes('all'))||(f==='open'&&t.includes('open'))||(f==='done'&&t.includes('done')));
+  });
+  renderAll();
+}
+
+// ── TOGGLE CHECKBOX ──
+function toggleItem(id, e) {
+  e.stopPropagation();
+  checkState[id] = !checkState[id];
+  scheduleSave();
+  updateProgress();
+  const itemEl = document.querySelector(`.item[data-id="${id}"]`);
+  if (itemEl) {
+    itemEl.classList.toggle('done', !!checkState[id]);
+    if (filter !== 'all') setTimeout(() => renderAll(), 300);
+  }
+  updateCatCounts();
+}
+
+// ── EXPAND DETAIL ──
+function toggleDetail(id, e) {
+  e.stopPropagation();
+  const panel = document.getElementById('detail-'+id);
+  const btn   = document.getElementById('expbtn-'+id);
+  if (!panel) return;
+  const open = panel.classList.toggle('open');
+  btn.classList.toggle('active', open);
+  btn.textContent = open ? '▲ less' : '▼ details';
+  if (open) refreshPhotoPreview(id);
+}
+
+// ── SAVE ITEM DETAIL ──
+function saveItemDetail(id) {
+  detailState[id] = {
+    model:    (document.getElementById('f-model-'+id)  ||{}).value || '',
+    finish:   (document.getElementById('f-finish-'+id) ||{}).value || '',
+    photoUrl: (document.getElementById('f-photo-'+id)  ||{}).value || '',
+    notes:    (document.getElementById('f-notes-'+id)  ||{}).value || '',
+  };
+  scheduleSave();
+  refreshBadges(id);
+  refreshPhotoPreview(id);
+  const s = document.getElementById('save-status-'+id);
+  if (s) { s.classList.add('show'); setTimeout(()=>s.classList.remove('show'),1800); }
+}
+
+function refreshBadges(id) {
+  const el = document.getElementById('badges-'+id);
+  if (el) el.innerHTML = buildBadges(id, getDetail(id));
+}
+
+function refreshPhotoPreview(id) {
+  const d    = getDetail(id);
+  const wrap = document.getElementById('photo-preview-'+id);
+  if (!wrap) return;
+  if (d.photoUrl) {
+    wrap.classList.add('visible');
+    wrap.innerHTML = `<img src="${esc(d.photoUrl)}" alt="product photo" onerror="this.parentElement.style.display='none'">`;
+  } else {
+    wrap.classList.remove('visible');
+    wrap.innerHTML = '';
+  }
+}
+
+function buildBadges(id, d) {
+  let o = '';
+  if (d.model)    o += `<span class="badge b-model">MODEL: ${esc(d.model)}</span>`;
+  if (d.finish)   o += `<span class="badge b-finish">FINISH: ${esc(d.finish)}</span>`;
+  if (d.photoUrl) o += `<span class="badge b-photo" onclick="event.stopPropagation();window.open('${esc(d.photoUrl)}','_blank')">📷 PHOTO</span>`;
+  return o;
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── PROGRESS ──
+function updateProgress() {
+  let total=0, done=0;
+  CATEGORIES.forEach(c=>c.items.forEach(i=>{total++;if(checkState[i.id])done++;}));
+  document.getElementById('progressText').textContent=`${done} / ${total} complete`;
+  document.getElementById('progressBar').style.width=total?`${(done/total)*100}%`:'0%';
+}
+
+function updateCatCounts() {
+  CATEGORIES.forEach(c=>{
+    const el=document.getElementById('count-'+c.id);
+    if(el) el.textContent=`${c.items.filter(i=>checkState[i.id]).length}/${c.items.length}`;
+  });
+}
+
+// ── TOGGLE CATEGORY ──
+function toggleCategory(id) {
+  const list =document.getElementById('list-'+id);
+  const arrow=document.getElementById('arrow-'+id);
+  if(list){ list.classList.toggle('visible'); arrow.classList.toggle('open'); }
+}
+
+// ── RENDER ──
+function renderAll() {
+  const container=document.getElementById('content');
+  container.innerHTML='';
+  CATEGORIES.forEach(cat=>renderCategory(cat,container));
+  updateProgress();
+  updateCatCounts();
+}
+
+function renderCategory(cat,container) {
+  const vis=cat.items.filter(i=>{
+    if(filter==='open') return !checkState[i.id];
+    if(filter==='done') return !!checkState[i.id];
+    return true;
+  });
+  if(!vis.length) return;
+
+  const catEl=document.createElement('div');
+  catEl.className='category';
+  const done=cat.items.filter(i=>checkState[i.id]).length;
+  catEl.innerHTML=`
+    <div class="cat-header" onclick="toggleCategory('${cat.id}')">
+      <div class="cat-dot" style="background:${cat.color}"></div>
+      <div class="cat-title" style="color:${cat.color}">${cat.title}</div>
+      <div class="cat-count" id="count-${cat.id}">${done}/${cat.items.length}</div>
+      <div class="cat-toggle open" id="arrow-${cat.id}">▼</div>
+    </div>
+    <ul class="items-list visible" id="list-${cat.id}"></ul>`;
+  container.appendChild(catEl);
+
+  const list=catEl.querySelector('#list-'+cat.id);
+  vis.forEach(item=>{
+    const isDone=!!checkState[item.id];
+    const d=getDetail(item.id);
+    const wrap=document.createElement('li');
+    wrap.className='item-wrap';
+    wrap.innerHTML=`
+      <div class="item${isDone?' done':''}" data-id="${item.id}" onclick="toggleItem('${item.id}',event)">
+        <div class="check-box"><span class="check-mark">✓</span></div>
+        <div class="item-body">
+          <span class="item-label">${item.text}</span>
+          ${item.note?`<span class="item-note-text">${item.note}</span>`:''}
+          <div class="item-badges" id="badges-${item.id}">${buildBadges(item.id,d)}</div>
+        </div>
+        <button class="expand-btn" id="expbtn-${item.id}" onclick="toggleDetail('${item.id}',event)">▼ details</button>
+      </div>
+      <div class="detail-panel" id="detail-${item.id}">
+        <div class="detail-grid">
+          <div class="detail-field">
+            <label class="field-label">Model / Item #</label>
+            <input class="field-input" id="f-model-${item.id}" type="text" placeholder="e.g. PD-8412-BN" value="${esc(d.model)}" autocomplete="off">
+          </div>
+          <div class="detail-field">
+            <label class="field-label">Finish / Color / Style</label>
+            <input class="field-input" id="f-finish-${item.id}" type="text" placeholder="e.g. Brushed Nickel" value="${esc(d.finish)}" autocomplete="off">
+          </div>
+          <div class="detail-field full">
+            <label class="field-label">Photo or Product URL</label>
+            <input class="field-input" id="f-photo-${item.id}" type="url" placeholder="https://..." value="${esc(d.photoUrl)}" autocomplete="off">
+            <div class="photo-preview${d.photoUrl?' visible':''}" id="photo-preview-${item.id}">
+              ${d.photoUrl?`<img src="${esc(d.photoUrl)}" alt="product photo" onerror="this.parentElement.style.display='none'">`:''}
+            </div>
+          </div>
+          <div class="detail-field full">
+            <label class="field-label">Notes</label>
+            <textarea class="field-input" id="f-notes-${item.id}" placeholder="Size, quantity, vendor contact, quote #, lead time, etc.">${esc(d.notes)}</textarea>
+          </div>
+        </div>
+        <div class="detail-save-row">
+          <button class="save-btn" onclick="saveItemDetail('${item.id}')">Save Details</button>
+          <span class="save-status" id="save-status-${item.id}">✓ saved</span>
+        </div>
+      </div>`;
+    list.appendChild(wrap);
+  });
+}
+
+init();
+</script>
+</body>
+</html>
