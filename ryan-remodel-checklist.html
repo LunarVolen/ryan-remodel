@@ -212,9 +212,10 @@
   .cat-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
 
   .cat-title {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Inter', system-ui, sans-serif;
     font-size: 1.14rem;
-    letter-spacing: 0.05em;
+    font-weight: 600;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     flex: 1;
   }
@@ -416,6 +417,31 @@
   }
   .save-status.show { opacity: 1; }
 
+  .cat-cost {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+    margin-right: 8px;
+  }
+
+  .master-cost {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.91rem;
+    color: var(--accent);
+    letter-spacing: 0.06em;
+    flex-shrink: 0;
+    border-left: 1px solid var(--border);
+    padding-left: 16px;
+    margin-left: 4px;
+  }
+
+  .badge.b-cost {
+    border-color: #3a4a2a;
+    color: #a0c080;
+  }
+
   .filter-bar {
     display: flex;
     gap: 8px;
@@ -470,6 +496,7 @@
   <h1>Ryan's Remodel — Open Items</h1>
   <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
   <div class="progress-text" id="progressText">0 / 0 complete</div>
+  <div class="master-cost" id="masterCost">Est. $0</div>
 </header>
 
 <div class="filter-bar">
@@ -742,7 +769,7 @@ function timestamp() {
 }
 
 // ── DETAIL ──
-function getDetail(id) { return detailState[id] || { model:'', finish:'', photoUrl:'', notes:'' }; }
+function getDetail(id) { return detailState[id] || { model:'', finish:'', cost:'', photoUrl:'', notes:'' }; }
 
 // ── FILTER ──
 function setFilter(f) {
@@ -785,12 +812,14 @@ function saveItemDetail(id) {
   detailState[id] = {
     model:    (document.getElementById('f-model-'+id)  ||{}).value || '',
     finish:   (document.getElementById('f-finish-'+id) ||{}).value || '',
+    cost:     (document.getElementById('f-cost-'+id)   ||{}).value || '',
     photoUrl: (document.getElementById('f-photo-'+id)  ||{}).value || '',
     notes:    (document.getElementById('f-notes-'+id)  ||{}).value || '',
   };
   scheduleSave();
   refreshBadges(id);
   refreshPhotoPreview(id);
+  updateCostTallies();
   const s = document.getElementById('save-status-'+id);
   if (s) { s.classList.add('show'); setTimeout(()=>s.classList.remove('show'),1800); }
 }
@@ -817,6 +846,7 @@ function buildBadges(id, d) {
   let o = '';
   if (d.model)    o += `<span class="badge b-model" onclick="event.stopPropagation()">MODEL: ${esc(d.model)}</span>`;
   if (d.finish)   o += `<span class="badge b-finish" onclick="event.stopPropagation()">FINISH: ${esc(d.finish)}</span>`;
+  if (d.cost)     o += `<span class="badge b-cost" onclick="event.stopPropagation()">EST: ${esc(d.cost)}</span>`;
   if (d.photoUrl) o += `<span class="badge b-photo" onclick="event.stopPropagation();window.open('${esc(d.photoUrl)}','_blank')">📷 PHOTO</span>`;
   return o;
 }
@@ -825,12 +855,41 @@ function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// ── COST TALLIES ──
+function parseCost(str) {
+  if (!str) return 0;
+  const n = parseFloat(String(str).replace(/[^0-9.]/g, ''));
+  return isNaN(n) ? 0 : n;
+}
+
+function formatCost(n) {
+  if (n === 0) return '';
+  return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+function updateCostTallies() {
+  let masterTotal = 0;
+  CATEGORIES.forEach(cat => {
+    let catTotal = 0;
+    cat.items.forEach(item => {
+      const d = getDetail(item.id);
+      catTotal += parseCost(d.cost);
+    });
+    masterTotal += catTotal;
+    const el = document.getElementById('catcost-'+cat.id);
+    if (el) el.textContent = catTotal > 0 ? formatCost(catTotal) : '';
+  });
+  const masterEl = document.getElementById('masterCost');
+  if (masterEl) masterEl.textContent = masterTotal > 0 ? 'Est. ' + formatCost(masterTotal) : 'Est. $0';
+}
+
 // ── PROGRESS ──
 function updateProgress() {
   let total=0, done=0;
   CATEGORIES.forEach(c=>c.items.forEach(i=>{total++;if(checkState[i.id])done++;}));
   document.getElementById('progressText').textContent=`${done} / ${total} complete`;
   document.getElementById('progressBar').style.width=total?`${(done/total)*100}%`:'0%';
+  updateCostTallies();
 }
 
 function updateCatCounts() {
@@ -871,6 +930,7 @@ function renderCategory(cat,container) {
     <div class="cat-header" onclick="toggleCategory('${cat.id}')">
       <div class="cat-dot" style="background:${cat.color}"></div>
       <div class="cat-title" style="color:${cat.color}">${cat.title}</div>
+      <div class="cat-cost" id="catcost-${cat.id}"></div>
       <div class="cat-count" id="count-${cat.id}">${done}/${cat.items.length}</div>
       <div class="cat-toggle open" id="arrow-${cat.id}">▼</div>
     </div>
@@ -902,6 +962,10 @@ function renderCategory(cat,container) {
           <div class="detail-field">
             <label class="field-label">Finish / Color / Style</label>
             <input class="field-input" id="f-finish-${item.id}" type="text" placeholder="e.g. Brushed Nickel" value="${esc(d.finish)}" autocomplete="off">
+          </div>
+          <div class="detail-field">
+            <label class="field-label">Cost Estimate</label>
+            <input class="field-input" id="f-cost-${item.id}" type="text" placeholder="e.g. $1,132" value="${esc(d.cost)}" autocomplete="off">
           </div>
           <div class="detail-field full">
             <label class="field-label">Photo or Product URL</label>
