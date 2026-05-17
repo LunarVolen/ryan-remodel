@@ -480,17 +480,12 @@
 
 <div class="content" id="content"></div>
 
+<script src="config.js"></script>
 <script>
-// ═══════════════════════════════════════════════════════
-//  CONFIGURATION
-//  Paste your JSONBin API key and Bin ID below.
-//  The Bin ID will be filled in automatically on first run.
-// ═══════════════════════════════════════════════════════
-const CONFIG = {
-  API_KEY: '$2a$10$sX52wl7Vsn7YII/PwcsAcOG0XLYEok/QY8Q8t9/w4Ouoe4gHYoXZa',   // ← replace this with your key
-  BIN_ID:  '6a09fca2c0954111d8398cfc',    // ← will be filled in after first run
-};
-// ═══════════════════════════════════════════════════════
+// ─────────────────────────────────────────────
+//  Credentials are loaded from config.js
+//  See CONFIG.API_KEY and CONFIG.BIN_ID there.
+// ─────────────────────────────────────────────
 
 const JSONBIN_BASE = 'https://api.jsonbin.io/v3';
 
@@ -820,8 +815,8 @@ function refreshPhotoPreview(id) {
 
 function buildBadges(id, d) {
   let o = '';
-  if (d.model)    o += `<span class="badge b-model">MODEL: ${esc(d.model)}</span>`;
-  if (d.finish)   o += `<span class="badge b-finish">FINISH: ${esc(d.finish)}</span>`;
+  if (d.model)    o += `<span class="badge b-model" onclick="event.stopPropagation()">MODEL: ${esc(d.model)}</span>`;
+  if (d.finish)   o += `<span class="badge b-finish" onclick="event.stopPropagation()">FINISH: ${esc(d.finish)}</span>`;
   if (d.photoUrl) o += `<span class="badge b-photo" onclick="event.stopPropagation();window.open('${esc(d.photoUrl)}','_blank')">📷 PHOTO</span>`;
   return o;
 }
